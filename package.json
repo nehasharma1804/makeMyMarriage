@@ -1,0 +1,43 @@
+{
+  "name": "make-my-marriage",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "server",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=24.21.0 <25",
+    "npm": ">=11 <12"
+  },
+  "packageManager": "npm@11.19.0",
+  "scripts": {
+    "setup": "node scripts/setup-env.mjs",
+    "build:shared": "npm run build --workspace @mmm/contracts",
+    "env:check": "npm run build:shared && node --import=tsx scripts/check-env.mjs",
+    "dev": "npm run env:check && node scripts/dev.mjs",
+    "dev:web": "npm run build:shared && npm run dev --workspace @mmm/web",
+    "dev:api": "npm run build:shared && npm run dev --workspace @mmm/api",
+    "build": "npm run build:shared && npm run build --workspace @mmm/api && npm run build --workspace @mmm/web",
+    "start": "npm run start --workspace @mmm/web",
+    "start:api": "npm run start --workspace @mmm/api",
+    "test": "vitest run",
+    "lint": "eslint server packages scripts *.mjs --max-warnings 0 && npm run lint --workspace @mmm/web",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run build:shared && npm run typecheck --workspaces --if-present",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@types/node": "^24.0.0",
+    "eslint": "9.39.5",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "8.71.0",
+    "vitest": "5.0.2"
+  }
+}
