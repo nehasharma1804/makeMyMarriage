@@ -36,4 +36,29 @@ describe('server environment', () => {
       'MONGODB_URI',
     );
   });
+
+  it('rejects short session secrets and origins containing a path', () => {
+    expect(() =>
+      loadServerEnvironment({ SESSION_SECRET: 'too-short' }),
+    ).toThrow('SESSION_SECRET');
+    expect(() =>
+      loadServerEnvironment({ WEB_ORIGIN: 'http://localhost:3000/path' }),
+    ).toThrow('WEB_ORIGIN');
+  });
+
+  it('requires complete authentication settings and HTTPS for production', () => {
+    expect(() =>
+      loadServerEnvironment({
+        NODE_ENV: 'production',
+        MONGODB_URI: 'mongodb://localhost:27017',
+      }),
+    ).toThrow('SESSION_SECRET');
+    expect(() =>
+      loadServerEnvironment({
+        NODE_ENV: 'production',
+        MONGODB_URI: 'mongodb://localhost:27017',
+        SESSION_SECRET: 'random-test-secret-at-least-32-characters',
+      }),
+    ).toThrow('WEB_ORIGIN');
+  });
 });

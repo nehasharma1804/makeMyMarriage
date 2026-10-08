@@ -28,10 +28,13 @@ Business logic belongs in `server/modules/`; database access in `server/database
 shared API types and validation in `packages/contracts/`. Obey any nested
 `AGENTS.md` instructions, including Next.js documentation requirements in the web app.
 
-The current stage is the basic project foundation. Build wedding features only
-when requested. Follow the PRD delivery phases. Authentication, Google/AWS media
-integration, and database collections/indexes are not implemented yet. Both Atlas
-and local database options are prepared; account provisioning is deferred.
+The foundation now includes the Stitch-based landing page, a read-only sample
+wedding, email/password sign-in, persistent sessions, and wedding creation with five
+unscheduled default events. MongoDB configuration and a session secret are still required
+for live authentication and persistence. Build further wedding features only
+when requested. Follow the PRD delivery phases. AWS media and guest sharing are
+not implemented yet. Both Atlas and local replica-set database options are
+prepared; account provisioning is deferred.
 
 Preserve existing files and uncommitted changes. Keep credentials out of chat,
 logs, and Git. Validate authorization on the server when private APIs are added.

@@ -7,8 +7,9 @@ export interface DatabaseConnection {
   close(): Promise<void>;
 }
 
-interface MongoDatabaseConnection extends DatabaseConnection {
+export interface MongoDatabaseConnection extends DatabaseConnection {
   getDatabase(): Db;
+  getClient(): MongoClient;
 }
 
 export function createMongoDatabase(environment: ServerEnvironment) {
@@ -26,6 +27,10 @@ export function createMongoDatabase(environment: ServerEnvironment) {
     getDatabase(): Db {
       if (!client) throw new Error('MongoDB is not configured');
       return client.db(environment.MONGODB_DB_NAME);
+    },
+    getClient(): MongoClient {
+      if (!client) throw new Error('MongoDB is not configured');
+      return client;
     },
     async ping(): Promise<boolean> {
       if (!client) return false;

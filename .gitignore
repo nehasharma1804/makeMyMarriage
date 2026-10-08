@@ -10,3 +10,7 @@ coverage/
 .DS_Store
 *.log
 tmp/
+.stitch/api-key
+**/.vercel/
+.vercel
+.env.local

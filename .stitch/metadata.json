@@ -1,0 +1,44 @@
+{
+  "projectId": "10393530197562018685",
+  "projectUrl": "https://stitch.withgoogle.com/projects/10393530197562018685",
+  "projectTitle": "MakeMyMarriage",
+  "connectionStatus": "verified",
+  "retrievedAt": "2026-10-03T00:48:23.677Z",
+  "screens": [
+    {
+      "screenId": "c4526b3f8d2d4035b0d1cbd5d47ad66e",
+      "name": "projects/10393530197562018685/screens/c4526b3f8d2d4035b0d1cbd5d47ad66e",
+      "title": "Make My Marriage — Modern Collaborative Wedding Platform",
+      "width": "2560",
+      "height": "13972",
+      "files": [
+        ".stitch/designs/landing-page-full.html",
+        ".stitch/designs/landing-page-full.png"
+      ]
+    },
+    {
+      "screenId": "97dd740f978f4098b896165359148c58",
+      "name": "projects/10393530197562018685/screens/97dd740f978f4098b896165359148c58",
+      "title": "Make My Marriage — Modern Collaborative Wedding Platform",
+      "width": "1280",
+      "height": "1024",
+      "files": [".stitch/designs/landing-page-compact.html"]
+    },
+    {
+      "screenId": "692b0a292b4f41c1a747ee03d04bea1d",
+      "name": "projects/10393530197562018685/screens/692b0a292b4f41c1a747ee03d04bea1d",
+      "title": "Make My Marriage — Secure Google Login",
+      "width": "2560",
+      "height": "2048",
+      "files": [
+        ".stitch/designs/sign-in-reference.html",
+        ".stitch/designs/sign-in-reference.png"
+      ],
+      "implementationNotes": "Adapted the layout for email/password authentication. Kept the original export unchanged; omitted unsupported guest flows and certification claims. Wedding photograph saved locally in apps/web/public/images/sign-in-wedding.jpg."
+    }
+  ],
+  "selectedLandingScreenId": "c4526b3f8d2d4035b0d1cbd5d47ad66e",
+  "designSystemFile": ".stitch/DESIGN.md",
+  "notes": "Both landing screens currently export identical HTML; the selected screen provides the full-resolution 2560x13972 PNG.",
+  "selectedSignInScreenId": "692b0a292b4f41c1a747ee03d04bea1d"
+}

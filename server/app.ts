@@ -1,16 +1,31 @@
 import Fastify, { LogController } from 'fastify';
+import cookie from '@fastify/cookie';
+import rateLimit from '@fastify/rate-limit';
 import type { ApiError, HealthResponse } from '@mmm/contracts';
 import type { ServerEnvironment } from './config/env.js';
 import {
   createMongoDatabase,
   type DatabaseConnection,
 } from './database/mongodb.js';
+import { createAppStore, type AppStore } from './database/app-store.js';
+import { AuthService } from './modules/auth/service.js';
+import { registerAuthRoutes } from './modules/auth/routes.js';
+import { registerWeddingRoutes } from './modules/weddings/routes.js';
+import { ApiProblem } from './shared/api-problem.js';
 
 export function buildApp(
   environment: ServerEnvironment,
-  options: { database?: DatabaseConnection; logger?: boolean } = {},
+  options: {
+    database?: DatabaseConnection;
+    logger?: boolean;
+    store?: AppStore;
+    now?: () => Date;
+  } = {},
 ) {
   const database = options.database ?? createMongoDatabase(environment);
+  const store = options.store ?? createAppStore(database);
+  const now = options.now ?? (() => new Date());
+  const auth = new AuthService(environment, store, now);
   const app = Fastify({
     logger:
       options.logger === false
@@ -25,6 +40,28 @@ export function buildApp(
   });
 
   app.addHook('onClose', async () => database.close());
+  app.register(
+    cookie,
+    environment.SESSION_SECRET ? { secret: environment.SESSION_SECRET } : {},
+  );
+  app.register(rateLimit, {
+    global: false,
+    errorResponseBuilder: () =>
+      new ApiProblem(
+        'RATE_LIMITED',
+        429,
+        'Too many requests. Please try again shortly.',
+      ),
+  });
+  app.addHook('onSend', async (_request, reply) => {
+    reply.header('Cache-Control', 'no-store');
+    reply.header('X-Content-Type-Options', 'nosniff');
+  });
+  // Register routes after the plugins load so route-level rate limits take effect.
+  app.register(async (featureApp) => {
+    registerAuthRoutes(featureApp, auth);
+    registerWeddingRoutes(featureApp, store, auth, now);
+  });
 
   app.get('/api/v1/health', async () => {
     return {
@@ -74,6 +111,12 @@ export function buildApp(
   });
 
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof ApiProblem) {
+      return reply.code(error.statusCode).send({
+        success: false,
+        error: { code: error.code, message: error.message },
+      } satisfies ApiError);
+    }
     const responseStatus =
       error instanceof Error && 'statusCode' in error
         ? error.statusCode

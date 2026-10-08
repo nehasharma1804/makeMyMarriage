@@ -6,3 +6,6 @@ coverage
 package-lock.json
 next-env.d.ts
 docs/*.pdf
+.stitch/api-key
+.stitch/DESIGN.md
+.stitch/designs/

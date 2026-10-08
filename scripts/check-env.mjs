@@ -32,9 +32,16 @@ try {
       ? 'MongoDB is configured; readiness will check the connection.'
       : 'MongoDB is not configured; the API can start but readiness will return 503.',
   );
+  const missingAuth = [
+    !server.SESSION_SECRET && 'SESSION_SECRET',
+    !server.MONGODB_URI && 'MONGODB_URI',
+  ].filter(Boolean);
   console.log(
-    'Google sign-in and AWS media features have not been implemented yet.',
+    missingAuth.length
+      ? `Email/password sign-in needs configuration: ${missingAuth.join(', ')}.`
+      : 'Email/password sign-in settings are present; live verification still requires reachable services.',
   );
+  console.log('AWS media features remain planned.');
 } catch (error) {
   console.error(
     error instanceof ConfigurationError

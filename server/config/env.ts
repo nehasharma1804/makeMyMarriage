@@ -31,6 +31,21 @@ const environmentSchema = z
       .min(100)
       .max(30000)
       .default(5000),
+    WEB_ORIGIN: z
+      .url({ protocol: /^https?$/ })
+      .default('http://localhost:3000')
+      .refine(
+        (value) => new URL(value).origin === value,
+        'Use an origin without a path',
+      ),
+    SESSION_SECRET: z
+      .string()
+      .default('')
+      .refine(
+        (value) => value === '' || value.length >= 32,
+        'Use at least 32 random characters',
+      ),
+    SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(720).default(168),
   })
   .superRefine((environment, context) => {
     if (environment.NODE_ENV === 'production' && !environment.MONGODB_URI) {
@@ -39,6 +54,24 @@ const environmentSchema = z
         path: ['MONGODB_URI'],
         message: 'Required in production',
       });
+    }
+    if (environment.NODE_ENV === 'production') {
+      for (const setting of ['SESSION_SECRET'] as const) {
+        if (!environment[setting]) {
+          context.addIssue({
+            code: 'custom',
+            path: [setting],
+            message: 'Required in production',
+          });
+        }
+      }
+      if (!environment.WEB_ORIGIN.startsWith('https://')) {
+        context.addIssue({
+          code: 'custom',
+          path: ['WEB_ORIGIN'],
+          message: 'HTTPS is required in production',
+        });
+      }
     }
   });
 

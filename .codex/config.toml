@@ -1,0 +1,8 @@
+# Google Stitch design retrieval for this local project.
+# Authentication is read locally by the helper; no key is stored here.
+[mcp_servers.stitch]
+url = "https://stitch.googleapis.com/mcp"
+http_headers_helper = "/usr/local/bin/node /Users/cisco/Documents/Codex/makeMyMarriage/scripts/stitch-auth-headers.mjs"
+enabled_tools = ["list_projects", "get_project", "list_screens", "get_screen"]
+startup_timeout_sec = 30
+tool_timeout_sec = 120

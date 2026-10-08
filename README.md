@@ -1,11 +1,18 @@
 # makeMyMarriage
 
-Development foundation: Next.js web app, separate Fastify API, shared contracts,
-environment validation, and MongoDB connection support. Authentication, media
-uploads, and wedding features are not implemented yet. The design PDFs remain
-unchanged. Development can happen entirely in Codex; VS Code is optional.
+MakeMyMarriage now includes the full Stitch-based landing page, a read-only
+Ashu and Priya sample wedding, email/password registration and sign-in, and wedding creation.
+The Next.js web app uses a separate Fastify API and MongoDB. Real sign-in and
+persistence still require your MongoDB configuration;
+see `docs/AUTH_SETUP.md`. Media and the remaining planning tools are future work.
+The original design PDFs and Stitch exports remain unchanged. Development can
+happen entirely in Codex; VS Code is optional.
 
 ## Start on this Mac
+
+For the public landing/demo release, follow [the Vercel deployment guide](docs/VERCEL_DEPLOYMENT.md).
+Vercel defaults to demo-only mode; account pages and the API proxy are disabled
+there until the full account launch is prepared. Local development is unchanged.
 
 ```sh
 cd /Users/cisco/Documents/Codex/makeMyMarriage
@@ -13,34 +20,51 @@ source scripts/use-local-node.sh
 node --version
 npm --version
 npm run setup
+npm run setup:auth
 npm run dev
 ```
 
-Open http://127.0.0.1:3000. The API runs at http://127.0.0.1:4000. Stop with Ctrl+C;
+Open http://localhost:3000. The API runs at http://127.0.0.1:4000. Stop with Ctrl+C;
 the runner stops the web app, API, and shared-package watcher together, allowing
 up to five seconds for cleanup. Run the `source` command in each new
 terminal: Node 24.21.0 and npm 11.19.0 are installed in `.tools/` for this project;
-your system Node 20.12.2 is unchanged. The starter page needs no credentials.
+your system Node 20.12.2 is unchanged. The landing page and sample demo need no credentials.
 
 Dependencies are already installed. After cloning elsewhere, install Node 24.21.0
 (with a version manager such as nvm, using `.nvmrc`) and run `npm ci`, then
 `npm run setup`. The ignored `.tools/` directory is specific to this Mac and is
 not included in Git. `npm run setup` copies example environment files without
 overwriting existing ones. Active API settings have defaults, so older `.env`
-files continue working. Google and AWS placeholders are inactive until their
-integrations are built.
+files continue working. Run `npm run setup:auth` to generate a local session
+secret without displaying it; an existing secret is preserved. Configure
+MongoDB when ready; AWS remains deferred.
 
 The two database options are prepared, but neither is installed/provisioned:
 see `infrastructure/README.md` for local Docker MongoDB and MongoDB Atlas.
 Leave `MONGODB_URI` empty while deciding. The API health endpoint works without
 MongoDB; its readiness endpoint correctly returns HTTP 503 until a real database
-connection succeeds. No Atlas, Google Cloud, or AWS accounts are required to run
-the basic starter.
+connection succeeds. No Atlas or AWS accounts are required to run
+the landing page and demo.
 
 If port 3000 is occupied by an existing web server, stop that server in its own
 terminal before running both services, or use `npm run dev:api` to start only
-the API. The web app's `API_BASE_URL` is validated but does not yet power any
-wedding feature or authentication flow.
+the API. The web app's server-only `API_BASE_URL` points its same-origin proxy
+at Fastify, keeping authentication cookies on the web origin.
+
+## Pages and current scope
+
+- `/`: complete responsive landing-page layout from Stitch, with PRD-aligned copy.
+- `/demo`: read-only sample workspace with planning tabs and guest website preview.
+- `/login`: email/password sign-in and registration when configured; a clear availability
+  message otherwise.
+- `/app/setup`: authenticated wedding creation form.
+- `/app/dashboard`: private summary of your saved wedding, role, and five events.
+
+One account can belong to one active wedding. Creation saves the wedding, initial
+Admin membership, and five unscheduled default events in a MongoDB transaction.
+Atlas or a local replica set is required. Member invitations, event editing,
+guest planning, tasks, expenses, public publishing, uploads, and sharing remain
+later features. The landing/demo visuals use illustrative data.
 
 ## Chosen tools
 
@@ -89,6 +113,7 @@ remain available if you choose to use that editor later; no setup command requir
 
 ```sh
 npm run setup         # Create missing .env files, preserving existing files
+npm run setup:auth    # Generate/preserve the local session secret privately
 npm run env:check     # Validate web/API settings without displaying credentials
 npm run dev           # Start web, API, and shared-contract watcher
 npm run dev:web       # Start only web
@@ -107,11 +132,13 @@ curl -i http://127.0.0.1:4000/api/v1/ready
 placeholders. Do not paste credentials into chat or commit `.env` files. Set a
 local `mongodb://` or Atlas `mongodb+srv://` URI in `server/.env` when ready, then
 restart the API. Readiness pings the database without creating wedding data.
-Production API startup requires a MongoDB URI; it still reports unavailable if
-the configured database cannot be reached.
+Production API startup requires a MongoDB URI, session
+secret, and HTTPS web origin; it still reports unavailable if the configured
+database cannot be reached.
 
-Atlas needs a database user, connection string, and IP allowlist. Google sign-in
-will need Google Cloud OAuth configuration when that feature is implemented.
+Atlas needs a database user, connection string, and IP allowlist. Local MongoDB
+is also supported. No Google account or OAuth credentials are needed.
+See `docs/AUTH_SETUP.md` for the exact account and local configuration steps.
 AWS S3/CloudFront can wait until media work; SQS and SES remain deferred. No
 accounts or paid resources were created. Local Docker MongoDB has no
 authentication and is bound to this laptop only; it is a development recipe.
@@ -120,13 +147,13 @@ authentication and is bound to this laptop only; it is a development recipe.
 
 Follow the PRD phases when feature work is authorized:
 
-1. Core planning: Google login, wedding creation and membership, events, guests and
+1. Core planning: email/password login, wedding creation and membership, events, guests and
    event assignments, RSVP tracking, tasks, expenses, shopping, and dashboard.
 2. Vendors and sharing: vendors, invitations, public wedding website and public RSVP.
 3. Media: private S3/CloudFront delivery, albums, member/QR uploads, gallery share
    links, and external livestream links.
-4. Public product experience: landing page, read-only Ashu and Priya demo,
-   onboarding polish and website customization.
+4. Public product experience: expand the sample demo and onboarding polish, and
+   add website customization. The landing page was built early at the user's request.
 
 Before implementation, resolve the documents' differing member permissions,
 invitation versus RSVP status, enforcement of one active wedding per user,

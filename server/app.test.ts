@@ -77,7 +77,7 @@ describe('API foundation', () => {
   });
 
   it('uses the documented error envelope for unimplemented routes', async () => {
-    const response = await createApp().inject('/api/v1/weddings');
+    const response = await createApp().inject('/api/v1/not-implemented');
     expect(response.statusCode).toBe(404);
     expect(apiErrorSchema.safeParse(response.json()).success).toBe(true);
   });

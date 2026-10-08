@@ -2,7 +2,7 @@
 
 The four September 2026 PRD, system, database, and API design PDFs remain the
 product baseline. This document records implementation choices without changing
-those PDFs or implementing wedding features.
+those PDFs. Later user-approved decisions below supersede the original authentication design.
 
 ## Selected foundation
 
@@ -16,8 +16,7 @@ those PDFs or implementing wedding features.
   local MongoDB use environment configuration.
 - Zod for environment and shared contract validation; strict TypeScript, ESLint,
   Prettier, and Vitest for verification.
-- Google identity, private S3/CloudFront delivery, and later SQS/SES follow the
-  design, but are not installed or implemented as features in this foundation.
+- Email/password identity with MongoDB replaces Google identity at the user's request. Private S3/CloudFront delivery and SQS/SES remain future work.
 - No new package is required for the foundation: the existing dependencies suffice.
 
 ## User preferences
@@ -33,10 +32,9 @@ were created by this work.
    `(weddingId, userId)` membership index allows multiple weddings. Recommend a
    unique partial index on `userId` for active memberships and transactional
    enforcement during wedding creation and invitation acceptance.
-2. **Identity and sessions:** the API accepts a verified Google ID token but leaves
-   session versus JWT open. Recommend secure HTTP-only cookie sessions and a
-   single browser origin, forwarding API calls to Fastify. Do not treat a Google
-   client ID or decoded, unverified token as authentication.
+2. **Identity and sessions (resolved):** email/password accounts in MongoDB with
+   secure HttpOnly cookie sessions. The same-origin Next.js proxy forwards to
+   Fastify. The October 6 decision below supersedes the Google flow in the PDFs.
 3. **Member permissions:** the PRD describes Admin event/livestream control while
    the API matrix allows Members to manage these. Confirm a single permission
    matrix before implementing authorization.
@@ -55,6 +53,51 @@ were created by this work.
 9. **MVP order:** follow the PRD phases. Internal RSVP tracking is core planning;
    polish public RSVP alongside invitations and the public wedding website.
 
-None of these open feature decisions prevents the current health/configuration
-foundation. Future tests should prioritize wedding isolation, role checks, safe
-public projections, token expiry/revocation, and concurrent wedding creation.
+## Landing page and onboarding decisions (October 2026)
+
+The user approved preserving the complete Stitch landing-page layout with
+PRD-aligned copy and wedding creation. The initial Google integration was replaced
+with email/password authentication on October 6.
+Original Stitch exports remain unchanged under `.stitch/`; sample previews are
+explicitly illustrative and carry no real guest or financial data.
+
+- Random, opaque sessions use HttpOnly cookies. Only token hashes are stored in
+  MongoDB. Origin checks and CSRF tokens protect writes; expiry and logout are
+  enforced server-side. Next.js forwards requests through a small same-origin API
+  proxy; business logic remains in Fastify.
+- A unique partial index permits one active membership per user. Wedding,
+  initial Admin membership, and five default events are created together in a
+  transaction. Atlas or a local replica set is required for transactions.
+- Individual event dates start unscheduled (`null`). The chosen wedding date is
+  kept as a calendar date, with `Asia/Kolkata` as the wedding timezone.
+- The private summary displays saved wedding and event data; remaining planning
+  tools, member invitations, media, and guest sharing are future work.
+
+Other open feature decisions above remain deferred until those features are
+requested. See `docs/AUTH_SETUP.md` for account setup and live verification.
+
+## Email/password decision (October 6, 2026)
+
+The user explicitly chose email/password registration and login stored in MongoDB,
+replacing Google OAuth. MongoDB is the data store; Fastify verifies passwords.
+
+- Shared Zod contracts normalize emails with trim/lowercase and reject unknown
+  fields. Registration requires a name and a password of 15–128 characters.
+  Passwords are not trimmed or silently truncated.
+- Node's asynchronous scrypt uses N=131072, r=8, p=1, a random 16-byte salt, and a
+  64-byte derived key. Only the encoded hash is persisted. No new crypto dependency.
+- A unique normalized email index prevents duplicate accounts. Registration never
+  attaches a password to an existing account, including a legacy Google account.
+- New accounts have `emailVerified: false`. Do not use that email as proof of
+  ownership for future member invitations. Verification and password recovery are
+  not implemented in this change; complete those flows before a public launch.
+- HttpOnly sessions, CSRF checks, one-time challenges, and wedding access rules
+  remain. Login gives a generic response for unknown emails, bad passwords,
+  disabled users, and legacy accounts without a password hash.
+- Credential routes share normalized-email and actual-peer limits, in addition
+  to challenge limits. Config refresh cannot reset the email bucket. Memory for
+  password hashing is capped by allowing two jobs per process.
+- Google UI, endpoint, environment requirement, and dependency are removed.
+  Existing `.env` values are preserved but any old Google client ID is ignored.
+- No live database has been configured or migrated. See `AUTH_SETUP.md` for
+  database setup and legacy-index considerations.

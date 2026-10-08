@@ -3,6 +3,7 @@
 services:
   mongodb:
     image: mongo:8.0
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
     ports:
       - '127.0.0.1:27017:27017'
     volumes:
@@ -14,7 +15,7 @@ services:
           'mongosh',
           '--quiet',
           '--eval',
-          'db.adminCommand({ ping: 1 }).ok',
+          'try { rs.status() } catch (e) { if (e.code === 94) { rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "127.0.0.1:27017" }] }) } else { throw e } }; if (!db.hello().isWritablePrimary) { quit(1) }',
         ]
       interval: 10s
       timeout: 5s

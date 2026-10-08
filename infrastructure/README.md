@@ -16,7 +16,7 @@ docker compose -f infrastructure/compose.yaml up -d
 In `server/.env`, set:
 
 ```dotenv
-MONGODB_URI=mongodb://127.0.0.1:27017
+MONGODB_URI=mongodb://127.0.0.1:27017/?replicaSet=rs0&directConnection=true
 MONGODB_DB_NAME=make_my_marriage_dev
 ```
 
@@ -29,9 +29,12 @@ docker compose -f infrastructure/compose.yaml down
 
 The compose service uses the Docker Official Image `mongo:8.0`, a Docker-managed
 data volume, and a port bound only to this laptop. It has no authentication and is
-for local development only. The compose recipe has not been run because Docker is
-unavailable. Before features use MongoDB transactions, extend local development
-to a replica set and add integration checks; this starter is a standalone database.
+for local development only. The compose recipe starts a single-node `rs0` replica
+set. Its health check initializes the set when needed and waits until the node
+becomes writable, so wedding creation can use transactions. The recipe has not
+been run because Docker is unavailable on this Mac. Existing data volumes are
+preserved; initialization is idempotent. Check health with
+`docker compose -f infrastructure/compose.yaml ps` before starting the API.
 
 ## Option B: MongoDB Atlas
 
